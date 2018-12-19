@@ -85,6 +85,7 @@ async function scrapeSite(data) {
     }
 
     const result = await scrape(options);
+
 }
 
 
@@ -132,4 +133,5 @@ async function getQuePosition(id) {
 }
 
 app.listen(3000)
+Kue.app.listen(3001);
 
