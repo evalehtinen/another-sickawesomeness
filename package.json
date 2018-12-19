@@ -1,0 +1,37 @@
+{
+  "name": "another-sickawesomeness",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evalehtinen/another-sickawesomeness.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/evalehtinen/another-sickawesomeness/issues"
+  },
+  "homepage": "https://github.com/evalehtinen/another-sickawesomeness#readme",
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "kue": "^0.11.6",
+    "physical-cpu-count": "^2.0.0",
+    "website-scraper": "^4.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.1.6",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.1.6",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.10.0",
+    "nodemon": "^1.18.9"
+  }
+}
