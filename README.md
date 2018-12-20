@@ -14,7 +14,8 @@ Returns a list of ID's in queue
 
 `/archive/id`
 
-Returns position in queue
+Returns position in queue with status code 202.
+Returns 200 with a string if id not found in queue.
 
 ## Install
 ##### Install redis:
