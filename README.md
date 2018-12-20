@@ -12,7 +12,7 @@ App is made with NodeJS with Express, Kue and website scraper.
 Takes in an array of site urls in JSON body.
 Returns a list of ID's in queue
 
-`/archive/id`
+`/archive/:id`
 
 Returns position in queue with status code 202.
 Returns 200 with a string if id not found in queue.
