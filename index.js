@@ -64,7 +64,7 @@ queue.process('fetchSite', numberOfWorkers, async(data, done) => {
 app.post('/archive', async(req, res) => {
     console.log("POST archive called ")
 
-    const jobsIDs = await archiveSites(req.body)
+    const jobsIDs = await createQueForSites(req.body)
     console.log("Jobs IDs", await jobsIDs)
     res.json(jobsIDs)
 })
@@ -106,7 +106,7 @@ async function scrapeSite(data) {
     // Uncomment to try very delayed "scraping"
     // return new Promise((resolve, reject) => {
     //     setTimeout(() => {
-    //         console.log("That took ages")
+    //         console.log("WOW that took ages")
     //         resolve()
     //     },8000)
     // })
@@ -114,7 +114,7 @@ async function scrapeSite(data) {
 
 
 
-async function archiveSites(sites) {
+async function createQueForSites(sites) {
     const sitesAsJobs = sites.map((site) => {
         return new Promise((resolve, reject) => {
 
@@ -157,13 +157,8 @@ async function getQuePosition(id) {
 
             let position = 0
             ids.some((inactiveId) => {
-                if (id !=  inactiveId) {
-                    position++
-                    return false
-                } else {
-                    position++
-                    return true
-                }
+                position++
+                return id == inactiveId
             })
 
             position + 1 // Plus one to count itself
