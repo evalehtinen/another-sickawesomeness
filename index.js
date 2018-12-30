@@ -3,10 +3,13 @@ import express from 'express';
 import scrape from 'website-scraper';
 import physicalCpuCount from 'physical-cpu-count'
 import bodyParser from 'body-parser'
+import del from 'del'
+
+const MAX_URLS = 10000; // Maximum number of urls put in the scraping queue.
 
 // const mockData = [
 //     "https://google.fi",
-//     "https://google.com",
+//     "https://ilmatieteenlaitos.fi/saa/espoo?day=1,
 //     "https://google.fr",
 //     "https://google.fi",
 //     "https://google.com",
@@ -25,61 +28,78 @@ import bodyParser from 'body-parser'
 //     "https://google.fr",
 // ]
 
-const app = express()
-app.use(bodyParser.json())
-app.listen(3000)
-kue.app.listen(3001);
-console.log('System up and running, lets do some work')
+const app = express();
+del(['archive/*']); // Deletes folders (sites) in archive
 
-const localhost = '0.0.0.0'
+app.use(bodyParser.json());
+app.listen(3000);
+kue.app.listen(3001);  // Visual representation of the queue.
+console.log('System up and running, lets do some work');
+
+const localhost = '192.168.1.62'; // Change this
+
+const archivedSitesIds = [];
 
 const queue =  kue.createQueue({
     redis: {
         host: localhost,
         port: 6379
     }
-})
+});
 
 queue.on('error', (err) => {
     console.log("Something terrible happened with que", err)
-})
+});
 
-const numberOfWorkers = physicalCpuCount * 2 + 1
+const numberOfWorkers = physicalCpuCount * 2 + 1;
 queue.process('fetchSite', numberOfWorkers, async(data, done) => {
     try {
-        queue.watchStuckJobs()
-        await scrapeSite(data)
+        queue.watchStuckJobs();
+        await scrapeSite(data);
 
-        console.log("Job done")
+        console.log("Job done");
         done()
 
     } catch(e) {
         console.log(e)
     }
-})
+});
 
 
 // Routes
 
 app.post('/archive', async(req, res) => {
-    console.log("POST archive called ")
-
-    const jobsIDs = await createQueForSites(req.body)
-    console.log("Jobs IDs", await jobsIDs)
-    res.json(jobsIDs)
-})
+    console.log("POST archive called ");
+    try {
+        const jobsIDs = await createQueForSites(req.body);
+        console.log("Jobs IDs", await jobsIDs);
+        archivedSitesIds.push(jobsIDs);
+        res.json(jobsIDs)
+    } catch (e) {
+        console.log(e)
+    }
+});
 
 app.get('/archive/:jobId', async(req,res) => {
-    const { jobId } = req.params
-    console.log("GET archive id called", jobId)
+    const { jobId } = req.params;
+    console.log("GET archive id called", jobId);
 
-    const jobQuePosition = await getQuePosition(jobId)
+    const jobQuePosition = await getQuePosition(jobId);
     if (jobQuePosition > 1) {
-        res.status(202).send('Job poisition in que: ' + jobQuePosition)
+        res.status(202).send('Job position in que: ' + jobQuePosition)
     } else {
-        res.send('Job not found in que')
+        const isArchived = archivedSitesIds.find((archivedID) => {
+            return archivedID === jobId
+        });
+
+        if (isArchived) {
+            app.use('/archivedSite', express.static('archive/' + jobId));
+            res.redirect('/archivedSite')
+        } else {
+            res.send('Job not found in queue nor in archives')
+        }
     }
-})
+});
 
 
 // Site scraper
@@ -92,14 +112,12 @@ class ScrapePlugin {
 }
 
 async function scrapeSite(data) {
-    const url = data.data.url
-    const name = url.replace('http://', '')
-    const name2 = name.replace('https://', '')
+    const url = data.data.url;
     const options = {
         urls: [url],
-        directory: './archive/' + name2 + ' ' + data.id,
+        directory: './archive/' + data.id,
         plugins:  [ new ScrapePlugin()]
-    }
+    };
 
     await scrape(options);
 
@@ -112,9 +130,11 @@ async function scrapeSite(data) {
     // })
 }
 
-
-
 async function createQueForSites(sites) {
+    if (sites.length > MAX_URLS) {
+        throw('Too many urls. The maximum size of the url list is ' + MAX_URLS)
+    }
+
     const sitesAsJobs = sites.map((site) => {
         return new Promise((resolve, reject) => {
 
@@ -127,12 +147,12 @@ async function createQueForSites(sites) {
                     if (!err) {
                         resolve(job.id)
                     } else {
-                        reject(err)
+                        reject(err);
                         console.log("Error adding job to redis", err)
                     }
                 })
             })
-    })
+    });
 
     return Promise.all(sitesAsJobs).then((id) => {
         return id
@@ -140,32 +160,32 @@ async function createQueForSites(sites) {
 }
 
 async function getQuePosition(id) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
         queue.inactive((err, ids) => {
-            console.log(ids)
+            console.log(ids);
 
             const isInQue = ids.find((inactiveId) => {
-                return inactiveId == id
-            })
+                return inactiveId === id
+            });
 
             if (!isInQue) {
-                console.log("Job not found in que")
-                resolve(0)
+                console.log("Job not found in que");
+                resolve(0);
                 return
             }
 
-            let position = 0
+            let position = 0;
             ids.some((inactiveId) => {
-                position++
-                return id == inactiveId
-            })
+                position++;
+                return id === inactiveId
+            });
 
-            position + 1 // Plus one to count itself
-            console.log("Job que position", position)
+            position++; // Plus one to count itself
+            console.log("Job que position", position);
             resolve(position)
-            })
         })
+    })
 }
 
 

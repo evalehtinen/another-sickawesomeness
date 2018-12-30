@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node index.js",
+    "start": "nodemon --ignore './archive/' --exec babel-node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/evalehtinen/another-sickawesomeness#readme",
   "dependencies": {
+    "babel-eslint": "^10.0.1",
     "body-parser": "^1.18.3",
+    "del": "^3.0.0",
     "express": "^4.16.4",
     "kue": "^0.11.6",
     "physical-cpu-count": "^2.0.0",
