@@ -1,4 +1,4 @@
-# another-sickawesomeness
+# scraper worker
 
 A simple website archiver with workers.
 App is made with NodeJS with Express, Kue (with redis) and website scraper.
